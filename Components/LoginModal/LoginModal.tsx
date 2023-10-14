@@ -17,6 +17,7 @@ import {
   Tab,
   TabPanel,
 } from "@chakra-ui/react";
+import { useFirebase } from 'react-redux-firebase';
 
 interface Props {
   isOpen: boolean;
@@ -24,7 +25,39 @@ interface Props {
 }
 
 const LoginModal: React.FC<Props> = ({ isOpen, onClose }) => {
-  const [activeTab, setActiveTab] = useState('login'); // 'login' or 'register'
+  const firebase = useFirebase();
+
+  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
+  const [username, setUsername] = useState(''); // New
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  const handleLogin = async () => {
+    try {
+      await firebase.login({
+        email,
+        password
+      });
+      onClose();
+    } catch (error) {
+      console.error("Authentication Error:", error);
+    }
+  };
+
+  const handleRegister = async () => {
+    if (password !== confirmPassword) {
+      console.error("Passwords do not match!");
+      return;
+    }
+
+    try {
+      await firebase.createUser({ email, password }, {username, email}); // Modified
+      onClose();
+    } catch (error) {
+      console.error("Registration Error:", error);
+    }
+  };
 
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
@@ -40,20 +73,21 @@ const LoginModal: React.FC<Props> = ({ isOpen, onClose }) => {
             </TabList>
             <TabPanels>
               <TabPanel>
-                <Input placeholder="Email" mb={4} />
-                <Input placeholder="Password" mb={4} type="password" />
+                <Input placeholder="Email" mb={4} value={email} onChange={(e) => setEmail(e.target.value)} />
+                <Input placeholder="Password" mb={4} type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
               </TabPanel>
               <TabPanel>
-                <Input placeholder="Email" mb={4} />
-                <Input placeholder="Password" mb={4} type="password" />
-                <Input placeholder="Confirm Password" mb={4} type="password" />
+                <Input placeholder="Username" mb={4} value={username} onChange={(e) => setUsername(e.target.value)} /> {/* New */}
+                <Input placeholder="Email" mb={4} value={email} onChange={(e) => setEmail(e.target.value)} />
+                <Input placeholder="Password" mb={4} type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                <Input placeholder="Confirm Password" mb={4} type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
               </TabPanel>
             </TabPanels>
           </Tabs>
         </ModalBody>
 
         <ModalFooter>
-          <Button colorScheme="blue" mr={3} onClick={onClose}>
+          <Button colorScheme="blue" mr={3} onClick={activeTab === 'login' ? handleLogin : handleRegister}>
             {activeTab === 'login' ? 'Login' : 'Register'}
           </Button>
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
@@ -64,3 +98,5 @@ const LoginModal: React.FC<Props> = ({ isOpen, onClose }) => {
 }
 
 export default LoginModal;
+
+

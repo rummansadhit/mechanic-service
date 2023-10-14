@@ -2,11 +2,16 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import LoginModal from '../LoginModal/LoginModal';
-
+import { useSelector } from 'react-redux';
+import { useFirebase } from 'react-redux-firebase';
 
 const Navbar = () => {
-
+    const firebase = useFirebase();  // <-- use the useFirebase hook
+    const auth = useSelector((state: any) => state.firebase?.auth);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const handleLogout = () => {
+        firebase.logout();
+    };
   return (
         <div className="navbar bg-base-100">
         <div className="navbar-start">
@@ -44,7 +49,15 @@ const Navbar = () => {
             </ul>
         </div>
         <div className="navbar-end">
-        <button onClick={() => setIsModalOpen(true)}>BUTTON</button>
+
+        {auth?.isEmpty ? (
+                    <button onClick={() => setIsModalOpen(true)}>Login</button>
+                ) : (
+                    <>
+                        <Link href="/profile">Profile</Link>
+                        <button onClick={handleLogout}>Logout</button>  
+                    </>
+                )}
         <LoginModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
         </div>
         </div>
